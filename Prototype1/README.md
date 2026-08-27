@@ -1,57 +1,73 @@
-# AR Foundation samples
+# HideAR IP1 Prototype
 
-[AR Foundation](https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@6.3/manual/index.html) enables you to create multi-platform augmented reality (AR) apps with Unity. This GitHub repository contains AR Foundation samples, the official AR Foundation sample app that you can download, build to your device, and use as a starting point for your own projects.
+This Unity project contains the first interactive AR prototype for HideAR.
 
-This project demonstrates the following AR Foundation implementations:
+The prototype is built on top of Unity's AR Foundation Samples anchor scene. The official AR anchor, plane detection, raycast, XR Origin, and ARKit behaviour have been kept intact so the app can use a stable, tested tap-to-place workflow.
 
-| **Platform**   | **Plug-in** |
-| :------------- | :---------- |
-| **Android**    | [Google ARCore XR Plug-in](https://docs.unity3d.com/Packages/com.unity.xr.arcore@6.3/manual/index.html) |
-| **iOS**        | [Apple ARKit XR Plug-in](https://docs.unity3d.com/Packages/com.unity.xr.arkit@6.3/manual/index.html) |
-| **Meta Quest** | [Unity OpenXR: Meta](https://docs.unity3d.com/Packages/com.unity.xr.meta-openxr@2.3/manual/index.html) |
-| **Android XR** | [Unity OpenXR: Android XR](https://docs.unity3d.com/Packages/com.unity.xr.androidxr-openxr@1.0/manual/index.html) |
+## Prototype Goal
 
-Each AR Foundation feature is used in a minimal sample scene with example code that you can modify or copy into your project.
+The current goal is not a full hide-and-seek game. This version only tests the core AR placement interaction:
 
-## Which version should I use?
+1. Scan a real table or floor.
+2. Tap a detected real-world surface.
+3. Place a virtual dinosaur at that point.
+4. Move or rotate the phone.
+5. Confirm the dinosaur remains anchored in the same real-world location.
 
-The `main` branch of this repository uses AR Foundation 6.2 and is compatible with Unity versions 6000.0 and newer. Refer to the following table for links to other branches of this repository and their corresponding Unity versions.
+## Main Scene
 
-| Unity version  | AR Foundation version |
-| -------------- | --------------------- |
-| Unity 6.3 beta (6000.3) | 6.3 ([main](https://github.com/Unity-Technologies/arfoundation-samples/) branch) |
-| Unity 6.2 (6000.2) | 6.2 ([main](https://github.com/Unity-Technologies/arfoundation-samples/tree/6.2)) |
-| Unity 6 (6000.0) | [6.0](https://github.com/Unity-Technologies/arfoundation-samples/tree/6.0) |
-| 2022.3 (Enterprise license only) | [5.2](https://github.com/Unity-Technologies/arfoundation-samples/tree/5.2) |
+The IP1 testing scene is:
 
-## How to use these samples
+`Assets/Scenes/IP1/HideAR_IP1.unity`
 
-### Build and run on device
+This scene is set as the first scene in Build Settings so the iPhone app opens directly into the IP1 experience instead of the AR Foundation Samples menu.
 
-You can build the AR Foundation Samples project directly to device, which can be a helpful introduction to using AR Foundation features for the first time.
+## User Experience
 
-To build to device, follow the steps below:
+When the app opens, the user sees:
 
-1. Install Unity 6000.0 or newer, and clone this repository.
-2. Open the Unity project at the root of this repository.
-3. As with any other Unity project, go to the [Build Profiles window](https://docs.unity3d.com/6000.2/Documentation/Manual/build-profiles-reference.html), select your target platform, and build this project.
+- HideAR IP1 title and short concept text
+- Scan instruction: `Move your phone to scan the surface`
+- Placement instruction: `Tap the surface to place`
+- Placement feedback after an anchor is created
+- Reset button for repeated testing
 
-### Understand the sample code
+The technical sample UI, debug labels, persistent-anchor prompts, and coordinate visuals are hidden from the tester-facing experience.
 
-All sample scenes in this project can be found in the `Assets/Scenes` folder. To learn more about how each scene works, refer to the [AR Foundation samples](https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@6.3/manual/samples.html) documentation, which is now published as part of the AR Foundation user manual.
+## Project-Specific Files
 
-# Community and feedback
+IP1 scene:
 
-Refer to sections below to understand how to provide different kinds of feedback to Unity.
+`Assets/Scenes/IP1/HideAR_IP1.unity`
 
-## AR Foundation bug reports
+IP1 presentation controller:
 
-To report a bug in AR Foundation, please [file a bug](https://unity3d.com/unity/qa/bug-reporting). You may also submit a GitHub issue, but GitHub issues are unofficial, and we will close your GitHub issue if it does not contain an official bug ID number. The best way to ensure that your issue is addressed is to file a bug using Unity's official bug reporting process.
+`Assets/Scripts/Runtime/IP1/IP1PresentationController.cs`
 
-## AR Foundation feature requests
+Dinosaur visual resource:
 
-To request a new feature in AR Foundation or related packages, use Unity's [XR Roadmap](https://unity.com/roadmap/unity-platform/xr). Click on the **AR Foundation** tab, then scroll down to **Submit a New Idea**.
+`Assets/IP1/Resources/LowPolyDino/dino.fbx`
 
-## Contributions to this repository
+## Preserved AR Foundation Sample Logic
 
-We are not accepting pull requests at this time. If you find an issue with the samples or would like to request a new sample, please submit a [GitHub issue](https://github.com/Unity-Technologies/arfoundation-samples/issues).
+The underlying AR functionality comes from Unity's official AR Foundation Samples. The following core anchor scripts are intentionally preserved:
+
+- `Assets/Scripts/Runtime/Anchors/ARPlaceAnchor.cs`
+- `Assets/Scripts/Runtime/Anchors/ARAnchorDebugVisualizer.cs`
+- `Assets/Scripts/Runtime/Anchors/AnchorAddRemoveLogger.cs`
+
+The IP1 presentation script does not replace the official anchor creation logic. It only changes what the user sees and adds the dinosaur visual under anchors created by the official sample workflow.
+
+## Build Target
+
+The tested target platform is iOS on iPhone using Unity 6.3 and AR Foundation 6.3.
+
+## Asset Credits
+
+Dinosaur model:
+
+Low Poly Dino from OpenGameArt  
+https://opengameart.org/content/low-poly-dino  
+License: CC0
+
+Unity AR Foundation Samples code and assets are covered by the Unity Companion License. See `LICENSE.md`.
