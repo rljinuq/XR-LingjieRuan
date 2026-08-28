@@ -18,7 +18,7 @@ The current goal is not a full hide-and-seek game. This version only tests the c
 
 The IP1 testing scene is:
 
-`Assets/Scenes/IP1/HideAR_IP1.unity`
+`Assets/Scenes/_HideAR_IP1_MainScene/HideAR_IP1.unity`
 
 This scene is set as the first scene in Build Settings so the iPhone app opens directly into the IP1 experience instead of the AR Foundation Samples menu.
 
@@ -38,15 +38,25 @@ The technical sample UI, debug labels, persistent-anchor prompts, and coordinate
 
 IP1 scene:
 
-`Assets/Scenes/IP1/HideAR_IP1.unity`
+`Assets/Scenes/_HideAR_IP1_MainScene/HideAR_IP1.unity`
 
 IP1 presentation controller:
 
-`Assets/Scripts/Runtime/IP1/IP1PresentationController.cs`
+`Assets/Scripts/Runtime/_HideAR_IP1_Scripts/IP1PresentationController.cs`
 
 Dinosaur visual resource:
 
-`Assets/IP1/Resources/LowPolyDino/dino.fbx`
+`Assets/_HideAR_IP1_Prototype/Resources/LowPolyDino/dino.fbx`
+
+## Repository Structure
+
+The folders with `_HideAR_IP1_` in their names contain the submission-facing IP1 prototype work:
+
+- `Assets/Scenes/_HideAR_IP1_MainScene`
+- `Assets/Scripts/Runtime/_HideAR_IP1_Scripts`
+- `Assets/_HideAR_IP1_Prototype`
+
+The other AR Foundation sample scenes, scripts, prefabs, and assets are intentionally kept in the repository as external technical references and future development material. They are not all part of the IP1 user-facing prototype. They remain available for IP2 and later development, such as image tracking, occlusion, object tracking, body/face tracking, shared anchors, and other XR interaction experiments.
 
 ## Preserved AR Foundation Sample Logic
 

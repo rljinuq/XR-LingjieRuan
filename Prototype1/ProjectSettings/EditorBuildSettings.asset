@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/IP1/HideAR_IP1.unity
+    path: Assets/Scenes/_HideAR_IP1_MainScene/HideAR_IP1.unity
     guid: 42d023c35b91444a8dae920744bc1f7d
   - enabled: 1
     path: Assets/Scenes/Menu/MenuLoader.unity
