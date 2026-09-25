@@ -1,20 +1,20 @@
-# HideAR IP1 Prototype
+# HideAR IP2 Prototype
 
-This Unity project contains the first interactive AR prototype for HideAR.
+This Unity project contains the second interactive AR prototype for HideAR.
 
 The prototype is built on top of Unity's AR Foundation Samples anchor scene. The official AR anchor, plane detection, raycast, XR Origin, and ARKit behaviour have been kept intact so the app can use a stable, tested tap-to-place workflow.
 
 ## Tutor Quick Guide
 
-This repository contains both the IP1 submission prototype and the original Unity AR Foundation sample material used as technical reference. The IP1 work is separated into folders with `_HideAR_IP1_` in the name, so the submission-facing files can be identified quickly.
+This repository contains both the IP2 submission prototype and the original Unity AR Foundation sample material used as technical reference. The IP2 work is separated into folders with `_HideAR_IP2_` in the name, so the submission-facing files can be identified quickly.
 
 The main prototype to review is the iPhone AR scene at:
 
-`Assets/Scenes/_HideAR_IP1_MainScene/HideAR_IP1.unity`
+`Assets/Scenes/_HideAR_IP2_MainScene/HideAR_IP2.unity`
 
-The expected IP1 demonstration is:
+The expected IP2 demonstration is:
 
-1. Open the IP1 scene.
+1. Open the IP2 scene.
 2. Build and run on an ARKit-supported iPhone.
 3. Scan a real horizontal surface, such as a desk or floor.
 4. Tap the detected surface to place the virtual dinosaur.
@@ -32,17 +32,17 @@ The current goal is not a full hide-and-seek game. This version only tests the c
 
 ## Main Scene
 
-The IP1 testing scene is:
+The IP2 testing scene is:
 
-`Assets/Scenes/_HideAR_IP1_MainScene/HideAR_IP1.unity`
+`Assets/Scenes/_HideAR_IP2_MainScene/HideAR_IP2.unity`
 
-This scene is set as the first scene in Build Settings so the iPhone app opens directly into the IP1 experience instead of the AR Foundation Samples menu.
+This scene is set as the first scene in Build Settings so the iPhone app opens directly into the IP2 experience instead of the AR Foundation Samples menu.
 
 ## User Experience
 
 When the app opens, the user sees:
 
-- HideAR IP1 title and short concept text
+- HideAR IP2 title and short concept text
 - Scan instruction: `Move your phone to scan the surface`
 - Placement instruction: `Tap the surface to place`
 - Placement feedback after an anchor is created
@@ -52,35 +52,35 @@ The technical sample UI, debug labels, persistent-anchor prompts, and coordinate
 
 ## Project-Specific Files
 
-IP1 scene:
+IP2 scene:
 
-`Assets/Scenes/_HideAR_IP1_MainScene/HideAR_IP1.unity`
+`Assets/Scenes/_HideAR_IP2_MainScene/HideAR_IP2.unity`
 
-IP1 presentation controller:
+IP2 presentation controller:
 
-`Assets/Scripts/Runtime/_HideAR_IP1_Scripts/IP1PresentationController.cs`
+`Assets/Scripts/Runtime/_HideAR_IP2_Scripts/IP2PresentationController.cs`
 
 Dinosaur visual resource:
 
-`Assets/_HideAR_IP1_Prototype/Resources/LowPolyDino/dino.fbx`
+`Assets/_HideAR_IP2_Prototype/Resources/LowPolyDino/dino.fbx`
 
 ## Repository Structure
 
-The folders with `_HideAR_IP1_` in their names contain the submission-facing IP1 prototype work:
+The folders with `_HideAR_IP2_` in their names contain the submission-facing IP2 prototype work:
 
-- `Assets/Scenes/_HideAR_IP1_MainScene`
-- `Assets/Scripts/Runtime/_HideAR_IP1_Scripts`
-- `Assets/_HideAR_IP1_Prototype`
+- `Assets/Scenes/_HideAR_IP2_MainScene`
+- `Assets/Scripts/Runtime/_HideAR_IP2_Scripts`
+- `Assets/_HideAR_IP2_Prototype`
 
-The other AR Foundation sample scenes, scripts, prefabs, and assets are intentionally kept in the repository as external technical references and future development material. They are not all part of the IP1 user-facing prototype. They remain available for IP2 and later development, such as image tracking, occlusion, object tracking, body/face tracking, shared anchors, and other XR interaction experiments.
+The other AR Foundation sample scenes, scripts, prefabs, and assets are intentionally kept in the repository as external technical references and future development material. They are not all part of the IP2 user-facing prototype. They remain available for later development, such as image tracking, occlusion, object tracking, body/face tracking, shared anchors, and other XR interaction experiments.
 
 ## Testing Document
 
 Testing plan and testing results:
 
-`HideAR_IP1_Testing_Plan.docx`
+`HideAR_IP2_Testing_Plan.docx`
 
-This document contains the intended IP1 testing method, participant task, and the recorded testing results from iPhone testing. It is the main tutor-facing testing document for evaluating the prototype process and outcome.
+This document contains the intended IP2 testing method, participant task, and the recorded testing results from iPhone testing. It is the main tutor-facing testing document for evaluating the prototype process and outcome.
 
 ## Originality and References
 
@@ -98,7 +98,7 @@ The underlying AR functionality comes from Unity's official AR Foundation Sample
 - `Assets/Scripts/Runtime/Anchors/ARAnchorDebugVisualizer.cs`
 - `Assets/Scripts/Runtime/Anchors/AnchorAddRemoveLogger.cs`
 
-The IP1 presentation script does not replace the official anchor creation logic. It only changes what the user sees and adds the dinosaur visual under anchors created by the official sample workflow.
+The IP2 presentation script does not replace the official anchor creation logic. It only changes what the user sees and adds the dinosaur visual under anchors created by the official sample workflow.
 
 ## Build Target
 

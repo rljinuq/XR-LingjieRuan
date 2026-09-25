@@ -3629,7 +3629,7 @@ GameObject:
   - component: {fileID: 2147000002}
   - component: {fileID: 2147000003}
   m_Layer: 0
-  m_Name: HideAR IP1 Presentation
+  m_Name: HideAR IP2 Presentation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

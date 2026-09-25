@@ -3,9 +3,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.ARFoundation;
 
-namespace HideAR.IP1
+namespace HideAR.IP2
 {
-    public class IP1PresentationController : MonoBehaviour
+    public class IP2PresentationController : MonoBehaviour
     {
         enum PrototypePhase
         {
@@ -35,6 +35,8 @@ namespace HideAR.IP1
         bool placementInputPending;
         float placementInputEnableAt;
         float countdownStartedAt;
+        float seekStartedAt;
+        float finalSeekTimeSeconds;
 
         readonly HashSet<ARAnchor> decoratedAnchors = new();
         readonly List<ARAnchor> extraAnchors = new();
@@ -150,7 +152,7 @@ namespace HideAR.IP1
             }
 
             GameObject dinosaur = Instantiate(dinosaurPrefab, anchor.transform);
-            dinosaur.name = "HideAR IP1 Dinosaur";
+            dinosaur.name = "HideAR IP2 Dinosaur";
             dinosaur.transform.localPosition = Vector3.up * surfaceOffsetMeters;
             dinosaur.transform.localRotation = Quaternion.identity;
             dinosaur.transform.localScale = Vector3.one;
@@ -306,6 +308,8 @@ namespace HideAR.IP1
                 return;
 
             phase = PrototypePhase.Seeking;
+            seekStartedAt = Time.unscaledTime;
+            finalSeekTimeSeconds = 0f;
             SetCameraView(true);
         }
 
@@ -324,6 +328,8 @@ namespace HideAR.IP1
             decoratedAnchors.Clear();
             placedDinosaur = null;
             placedAnchor = null;
+            seekStartedAt = 0f;
+            finalSeekTimeSeconds = 0f;
         }
 
         void SchedulePlacementInput()
@@ -384,6 +390,8 @@ namespace HideAR.IP1
                 if (hitTransform != placedDinosaur.transform && !hitTransform.IsChildOf(placedDinosaur.transform))
                     continue;
 
+                finalSeekTimeSeconds = Mathf.Max(0f, Time.unscaledTime - seekStartedAt);
+                Debug.Log($"HideAR search completed in {finalSeekTimeSeconds:0.0} seconds.", this);
                 phase = PrototypePhase.Found;
                 SetCameraView(false);
                 return;
@@ -425,20 +433,20 @@ namespace HideAR.IP1
         {
             GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), backgroundTexture, ScaleMode.StretchToFill);
             Rect safeArea = GuiSafeArea();
-            float width = Mathf.Min(safeArea.width - 48f, 920f);
+            float width = Mathf.Min(safeArea.width - 64f, 980f);
             float x = safeArea.x + (safeArea.width - width) * 0.5f;
-            Rect contentRect = new(x, safeArea.y + 54f, width, safeArea.height - 108f);
+            Rect contentRect = new(x, safeArea.y + 72f, width, safeArea.height - 144f);
 
             GUILayout.BeginArea(contentRect);
             GUILayout.Label(FullScreenEyebrow(), smallStyle);
-            GUILayout.Space(18f);
+            GUILayout.Space(24f);
             GUILayout.Label(FullScreenTitle(), heroTitleStyle);
-            GUILayout.Space(22f);
+            GUILayout.Space(28f);
             GUILayout.Label(FullScreenBody(), bodyStyle);
             GUILayout.FlexibleSpace();
 
             string buttonLabel = FullScreenButtonLabel();
-            if (!string.IsNullOrEmpty(buttonLabel) && GUILayout.Button(buttonLabel, buttonStyle, GUILayout.Height(104f)))
+            if (!string.IsNullOrEmpty(buttonLabel) && GUILayout.Button(buttonLabel, buttonStyle, GUILayout.Height(112f)))
             {
                 if (phase == PrototypePhase.Intro)
                     StartGame();
@@ -454,42 +462,46 @@ namespace HideAR.IP1
         void DrawLiveCameraHud()
         {
             Rect safeArea = GuiSafeArea();
-            float panelWidth = Mathf.Min(safeArea.width - 48f, 920f);
+            float panelWidth = Mathf.Min(safeArea.width - 48f, 960f);
             float panelX = safeArea.x + (safeArea.width - panelWidth) * 0.5f;
-            Rect panelRect = new(panelX, safeArea.y + 22f, panelWidth, 230f);
+            Rect panelRect = new(panelX, safeArea.y + 24f, panelWidth, 300f);
             GUI.Box(panelRect, GUIContent.none, panelStyle);
 
             bool isPlacement = phase == PrototypePhase.HidingPlacement;
             bool isReview = phase == PrototypePhase.PlacementReview;
 
-            GUILayout.BeginArea(new Rect(panelRect.x + 28f, panelRect.y + 22f, panelRect.width - 56f, panelRect.height - 44f));
-            GUILayout.Label(phase == PrototypePhase.Seeking ? "SEEK  2 / 2" : "HIDE  1 / 2", smallStyle);
-            GUILayout.Space(8f);
+            GUILayout.BeginArea(new Rect(panelRect.x + 36f, panelRect.y + 30f, panelRect.width - 72f, panelRect.height - 60f));
+            GUILayout.Label(
+                phase == PrototypePhase.Seeking
+                    ? $"SEEK  2 / 2     {Time.unscaledTime - seekStartedAt:0.0} s"
+                    : "HIDE  1 / 2",
+                smallStyle);
+            GUILayout.Space(12f);
             GUILayout.Label(
                 isPlacement ? "Choose a hiding spot" : isReview ? "Check the hiding spot" : "Find the dinosaur",
                 titleStyle);
-            GUILayout.Space(8f);
+            GUILayout.Space(14f);
             GUILayout.Label(
                 isPlacement
-                    ? "Move your phone slowly, then tap a detected surface."
+                    ? "Scan slowly. Tap a detected surface."
                     : isReview
-                        ? "Walk around and check the dinosaur. Move it or confirm when you are happy."
-                        : "Move around the room. Tap the dinosaur when you see it.",
+                        ? "Walk around to check the spot. Move it or lock it in."
+                        : "Move around. Tap the dinosaur when you find it.",
                 bodyStyle);
             GUILayout.EndArea();
 
             if (isPlacement)
             {
-                Rect statusRect = new(panelX, safeArea.yMax - 104f, panelWidth, 82f);
+                Rect statusRect = new(panelX, safeArea.yMax - 116f, panelWidth, 92f);
                 GUI.Box(statusRect, placementInputPending ? "Starting camera..." : "Tap the surface to hide", statusStyle);
             }
             else if (isReview)
             {
                 const float gap = 16f;
                 float buttonWidth = (panelWidth - gap) * 0.5f;
-                float buttonY = safeArea.yMax - 116f;
-                Rect moveRect = new(panelX, buttonY, buttonWidth, 94f);
-                Rect confirmRect = new(panelX + buttonWidth + gap, buttonY, buttonWidth, 94f);
+                float buttonY = safeArea.yMax - 124f;
+                Rect moveRect = new(panelX, buttonY, buttonWidth, 100f);
+                Rect confirmRect = new(panelX + buttonWidth + gap, buttonY, buttonWidth, 100f);
 
                 if (GUI.Button(moveRect, "Move Dinosaur", secondaryButtonStyle))
                     MoveDinosaur();
@@ -532,10 +544,10 @@ namespace HideAR.IP1
         {
             return phase switch
             {
-                PrototypePhase.Intro => "One player hides a dinosaur in the real room. The next player searches for it through AR.",
-                PrototypePhase.HiddenHandoff => "Pass the phone to the seeker without revealing the hiding place.",
+                PrototypePhase.Intro => "Hide a dinosaur in the real room. Pass the phone. Let the hunt begin.",
+                PrototypePhase.HiddenHandoff => "Pass the phone. Keep the hiding place secret.",
                 PrototypePhase.Countdown => "The camera will open when the search begins.",
-                PrototypePhase.Found => "Great search. The hidden dinosaur has been found.",
+                PrototypePhase.Found => $"Search time: {finalSeekTimeSeconds:0.0} seconds\n\nGreat search. You found the hidden dinosaur.",
                 _ => string.Empty
             };
         }
@@ -571,38 +583,42 @@ namespace HideAR.IP1
 
             heroTitleStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.09f, 54f, 88f)),
+                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.088f, 54f, 88f)),
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white },
-                wordWrap = true
+                wordWrap = true,
+                alignment = TextAnchor.UpperLeft
             };
 
             titleStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.052f, 34f, 52f)),
+                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.052f, 38f, 54f)),
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white },
-                wordWrap = true
+                wordWrap = true,
+                alignment = TextAnchor.UpperLeft
             };
 
             bodyStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.033f, 22f, 34f)),
+                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.034f, 24f, 36f)),
                 normal = { textColor = new Color(0.9f, 0.93f, 0.97f, 1f) },
-                wordWrap = true
+                wordWrap = true,
+                alignment = TextAnchor.UpperLeft
             };
 
             smallStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.025f, 18f, 26f)),
+                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.026f, 20f, 28f)),
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = new Color(0.42f, 0.95f, 0.72f, 1f) },
-                wordWrap = true
+                wordWrap = true,
+                alignment = TextAnchor.UpperLeft
             };
 
             buttonStyle = new GUIStyle(GUI.skin.button)
             {
-                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.043f, 30f, 44f)),
+                fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.width * 0.041f, 30f, 42f)),
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter,
                 normal =

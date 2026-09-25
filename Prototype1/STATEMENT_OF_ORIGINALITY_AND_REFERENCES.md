@@ -23,7 +23,7 @@ My contribution includes:
 
 - the HideAR concept and hide-and-seek design direction;
 - deciding how AR spatial placement supports the concept;
-- defining the IP1 prototype scope;
+- defining the IP2 prototype scope;
 - designing the user interaction and presentation flow;
 - responding to tutor feedback about stronger XR-specific interactions;
 - designing the testing objective and testing methodology;
