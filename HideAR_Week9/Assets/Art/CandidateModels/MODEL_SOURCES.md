@@ -65,3 +65,11 @@ Note: the repository root `.gitignore` ignores `*.zip`, so the original zip file
 - Detected model files after extraction: 167 FBX, 167 OBJ, 160 GLB, 7 Blend.
 - By source: Quaternius Farm Animals has 7 FBX, 7 OBJ and 7 Blend files; Kenney Cube Pets has 15 FBX, 15 OBJ and 15 GLB files; Kenney Prototype Kit has 145 FBX, 145 OBJ and 145 GLB files.
 - The downloaded assets are visual content only. Unity AR Foundation/OpenXR/XRI still provide passthrough, controller input, plane data and anchors.
+
+## Git publishing subset (2026-10-17)
+
+The download and extraction records above describe the complete local candidate library. All of those local files remain available; ignoring a file in Git does not remove it from this Unity project on this Mac.
+
+For the current classroom repository, only the three used Cube Pets FBX files, their shared `FBX format/Textures/colormap.png`, the Cube Pets license, this source record and their required `.meta` files are published from this candidate folder. The dinosaur source and all four placement prefabs/materials remain published in their existing project folders.
+
+Unused Quaternius/Prototype Kit assets, other pets, duplicate OBJ/GLB formats, thumbnails and archive downloads are excluded by the project's `.gitignore`. This keeps the current source repository focused without discarding possible future choices or their references. A future model choice must explicitly add its source files and matching `.meta` dependencies to the publishing allowlist before committing.

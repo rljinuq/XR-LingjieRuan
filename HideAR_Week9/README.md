@@ -69,3 +69,7 @@ The only enabled build scene is the classroom scene. Switch to Android in File >
 - Project-specific C# and scene assembly were developed with Codex assistance. Course and Unity functionality should not be presented as algorithms authored by the student.
 
 Package versions are pinned to the installed Unity-compatible stack; they are not automatically upgraded to every version mentioned by the course. `Packages/packages-lock.json` should be committed along with the manifest.
+
+## Source Repository Footprint
+
+The repository includes the current four model choices and their required source meshes, textures, materials, licenses and Unity metadata. Unused candidate packs, extra model formats and previews remain local and are ignored rather than deleted. Their original sources and download hashes remain recorded in `Assets/Art/CandidateModels/MODEL_SOURCES.md`. The publishing allowlist must be updated if a future choice requires an additional candidate asset.

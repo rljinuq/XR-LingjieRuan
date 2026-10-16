@@ -16,3 +16,34 @@
 # The package puts required assets here; this is not the project's local UserSettings.
 !Assets/CompositionLayers/UserSettings/
 !Assets/CompositionLayers/UserSettings/**
+
+# 备用素材保留在本地；只提交当前三只宠物的源模型、贴图和许可。
+# Keep candidate packs local; publish only the three used pets and their dependencies.
+/Assets/Art/CandidateModels/*
+!/Assets/Art/CandidateModels/MODEL_SOURCES.md
+!/Assets/Art/CandidateModels/MODEL_SOURCES.md.meta
+!/Assets/Art/CandidateModels/Sources/
+!/Assets/Art/CandidateModels/Sources.meta
+/Assets/Art/CandidateModels/Sources/*
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets.meta
+/Assets/Art/CandidateModels/Sources/Kenney_CubePets/*
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/License.txt
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/License.txt.meta
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models.meta
+/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/*
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format.meta
+/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/*
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/animal-dog.fbx
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/animal-dog.fbx.meta
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/animal-cat.fbx
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/animal-cat.fbx.meta
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/animal-bunny.fbx
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/animal-bunny.fbx.meta
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/Textures/
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/Textures.meta
+/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/Textures/*
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/Textures/colormap.png
+!/Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/Textures/colormap.png.meta
