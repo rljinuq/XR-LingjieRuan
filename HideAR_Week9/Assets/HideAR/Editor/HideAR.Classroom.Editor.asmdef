@@ -1,0 +1,5 @@
+{
+  "name": "HideAR.Classroom.Editor",
+  "includePlatforms": ["Editor"],
+  "references": ["HideAR.Classroom", "Unity.XR.ARFoundation", "Unity.XR.ARSubsystems", "Unity.XR.CoreUtils", "Unity.InputSystem", "Unity.XR.Interaction.Toolkit", "UnityEngine.UI", "Unity.XR.Management", "Unity.XR.Management.Editor", "Unity.XR.OpenXR", "Unity.XR.OpenXR.Editor", "Unity.RenderPipelines.Universal.Runtime"]
+}
