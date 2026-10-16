@@ -1,0 +1,18 @@
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+/[Uu]serSettings/
+[Bb]uilds/
+.utmp/
+.vs/
+.idea/
+*.csproj
+*.sln
+*.slnx
+*.apk
+.DS_Store
+
+# The package puts required assets here; this is not the project's local UserSettings.
+!Assets/CompositionLayers/UserSettings/
+!Assets/CompositionLayers/UserSettings/**
