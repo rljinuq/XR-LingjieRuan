@@ -1,0 +1,6 @@
+{
+  "name": "HideAR.Classroom.Tests",
+  "references": ["HideAR.Classroom", "HideAR.Classroom.Editor", "Unity.XR.ARFoundation", "Unity.XR.ARSubsystems", "Unity.XR.CoreUtils", "Unity.XR.Interaction.Toolkit", "Unity.InputSystem", "UnityEngine.UI"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

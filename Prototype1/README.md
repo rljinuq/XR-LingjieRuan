@@ -1,5 +1,18 @@
 # HideAR IP2 Prototype
 
+## Current Headset Version
+
+The new Quest 3S / Quest 3 version is in `Assets/HideARQuest/Scenes/HideAR_IP2_Quest.unity`.
+It includes Start, placement review and repositioning, confirmation, headset handoff, countdown, seeking, found feedback, a search timer, and Reset.
+
+Open it with `HideAR > Quest > 1. Open Quest Scene` in Unity. Use the Quest build menu to package only that scene for Android. See [Quest installation and testing steps](QUEST_TESTING_GUIDE.md) and [Quest implementation notes](Assets/HideARQuest/README.md).
+
+For the presentation, read the [Chinese code walkthrough](QUEST_CODE_GUIDE.md), which separates game code from official XR functionality and generated build code.
+
+The iPhone scene, iPhone presentation code, official sample scripts and package versions are preserved. The sections below describe the earlier iPhone placement prototype and its resources, not the new Quest game flow.
+
+## Earlier iPhone Prototype
+
 This Unity project contains the second interactive AR prototype for HideAR.
 
 The prototype is built on top of Unity's AR Foundation Samples anchor scene. The official AR anchor, plane detection, raycast, XR Origin, and ARKit behaviour have been kept intact so the app can use a stable, tested tap-to-place workflow.

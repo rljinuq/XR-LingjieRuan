@@ -1,0 +1,6 @@
+{
+  "name": "HideAR.Quest.Tests",
+  "references": ["HideAR.Quest", "HideAR.Quest.Editor", "Unity.TextMeshPro", "UnityEngine.UI", "Unity.XR.ARFoundation", "Unity.XR.ARFoundation.Samples", "Unity.XR.ARSubsystems", "Unity.XR.CoreUtils"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

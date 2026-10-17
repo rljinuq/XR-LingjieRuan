@@ -1,6 +1,8 @@
 [Ll]ibrary/
 [Ll]ogs/
 [Tt]emp/
+# Unity Android native build cache
+/.utmp/
 [Oo]bj/
 [Bb]uild/
 [Bb]uilds/

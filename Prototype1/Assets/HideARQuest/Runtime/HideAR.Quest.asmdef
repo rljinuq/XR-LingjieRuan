@@ -1,0 +1,10 @@
+{
+  "name": "HideAR.Quest",
+  "rootNamespace": "HideAR.Quest",
+  "references": [
+    "Unity.XR.ARFoundation.Samples", "Unity.XR.ARFoundation", "Unity.XR.ARSubsystems",
+    "Unity.XR.CoreUtils", "Unity.InputSystem", "Unity.XR.Interaction.Toolkit",
+    "Unity.TextMeshPro", "UnityEngine.UI", "Unity.XR.MetaOpenXR", "Unity.XR.OpenXR"
+  ],
+  "autoReferenced": true
+}

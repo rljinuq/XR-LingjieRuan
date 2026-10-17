@@ -1,0 +1,11 @@
+{
+  "name": "HideAR.Quest.Editor",
+  "rootNamespace": "HideAR.Quest.Editor",
+  "includePlatforms": ["Editor"],
+  "references": [
+    "HideAR.Quest", "Unity.XR.ARFoundation.Samples", "Unity.XR.ARFoundation", "Unity.XR.ARSubsystems",
+    "Unity.XR.CoreUtils", "Unity.InputSystem", "Unity.XR.Interaction.Toolkit", "Unity.TextMeshPro",
+    "UnityEngine.UI", "Unity.XR.Management", "Unity.XR.Management.Editor", "Unity.XR.OpenXR",
+    "Unity.XR.OpenXR.Editor", "Unity.RenderPipelines.Universal.Runtime"
+  ]
+}
