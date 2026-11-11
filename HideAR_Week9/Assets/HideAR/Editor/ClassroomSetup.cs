@@ -1,3 +1,7 @@
+// ClassroomSetup.cs：只在 Unity Editor 中运行的课堂项目设置工具，负责生成/更新 Scene、Prefab 和 Android 配置。
+// 这里的菜单命令不是头显里的游戏流程；运行时由 Assets/HideAR/Scripts 下的脚本处理。
+// Open 打开 Scene；Prepare 只在 Scene 不存在时组装；Apply 命令会写入编辑器资源；BuildApk 只负责打包。
+// Editor commands prepare the project. The runtime scripts handle player input and gameplay.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,49 +39,58 @@ using Object = UnityEngine.Object;
 
 namespace HideAR.Classroom.Editor
 {
-    // 职责：编辑器里的场景组装、资源配置和 APK 构建工具；不在 Quest 游戏中运行。
-    // Role: editor-only scene assembly, asset setup and APK building, not Quest runtime gameplay.
-    // 已保存的场景可直接使用，不需要每次运行这些初始化工具。
-    // Use the saved scene directly; these initialization tools are not needed each run.
     public static class ClassroomSetup
     {
-        public const string ScenePath = "Assets/HideAR/Scenes/HideAR_Week9.unity";
-        const string Settings = "Assets/HideAR/Settings/";
-        const string Prefabs = "Assets/HideAR/Prefabs/";
-        const string CubePetsFbx = "Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/";
+        // ===== 项目资源路径 =====
+        public const string ScenePath = "Assets/HideAR/Scenes/HideAR_Week9.unity"; // 此课堂版运行、测试和打包使用的场景。
+        const string Settings = "Assets/HideAR/Settings/"; // Controls、URP、材质和换色贴图保存位置。
+        const string Prefabs = "Assets/HideAR/Prefabs/"; // 运行时 Instantiate 使用的已保存模型/平面模板。
+        const string CubePetsFbx = "Assets/Art/CandidateModels/Sources/Kenney_CubePets/Models/FBX format/"; // Dog/Cat/Bunny 源 FBX 文件位置。
 
+        // ===== Unity 菜单：打开课堂 Scene =====
+        // Opens the saved classroom scene. It does not rebuild an existing scene.
         [MenuItem("HideAR/Classroom/Open Game Scene")]
         public static void Open()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            // Unity 询问是否保存当前 Scene；点 Cancel 时直接退出，不覆盖用户正在编辑的内容。
             if (!File.Exists(ScenePath)) Prepare();
+            // 文件不存在才运行首次组装流程；文件存在则只打开它。
             else EditorSceneManager.OpenScene(ScenePath);
         }
 
-        // Apply 系列是显式修改现有资源/场景的工具，不是运行游戏时的必要步骤。
-        // Apply commands explicitly modify saved assets/scenes; they are not play-time steps.
+        // ===== Unity 菜单：把普通尺寸/样式保存到当前 Scene =====
+        // Applies editor-time card styling, then saves the scene and assets.
         [MenuItem("HideAR/Classroom/Apply Simple UI Style")]
         public static void ApplySimpleUiStyle()
         {
             if (!File.Exists(ScenePath)) Prepare();
+            // 没有课堂 Scene 时先创建；存在时打开保存版本再修改。
             else EditorSceneManager.OpenScene(ScenePath);
             var ui = Object.FindAnyObjectByType<GameUI>();
             if (ui == null) throw new Exception("Game UI was not found.");
+            // 找不到 GameUI 就报错停止；不能对不存在的卡片样式进行保存。
             ApplyUiStyle(ui);
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
             EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
             AssetDatabase.SaveAssets();
             Debug.Log("Applied simple MR task-card UI style.");
         }
+        // MarkSceneDirty 通知 Unity Scene 已改变；SaveScene/SaveAssets 才把变化写入项目文件。
 
+        // ===== Unity 菜单：准备模型选项、Prefabs 和材质 =====
+        // Creates editor assets; the in-game Change object button does not call this method.
         [MenuItem("HideAR/Classroom/Apply Object Choices")]
         public static void ApplyObjectChoices()
         {
             if (!File.Exists(ScenePath)) Prepare();
+            // 确保目标 Scene 已存在并打开，之后才能找到 PlaceOnPlane 组件。
             else EditorSceneManager.OpenScene(ScenePath);
             var placement = Object.FindAnyObjectByType<PlaceOnPlane>();
             if (placement == null) throw new Exception("PlaceOnPlane was not found.");
+            // 场景没有放置组件就停止，避免把模型引用写到错误对象。
             var dinosaur = AssetDatabase.LoadAssetAtPath<GameObject>(Prefabs + "Dinosaur.prefab") ?? MakeDinosaur();
+            // ?? 表示左边为 null 才执行右边：优先复用已有 Dinosaur.prefab，否则创建它。
             placement.prefabToPlace = dinosaur;
             placement.placeablePrefabs = MakePlaceableChoices(dinosaur);
             placement.placeableNames = new[] { "Dinosaur", "Dog", "Cat", "Bunny" };
@@ -87,29 +100,38 @@ namespace HideAR.Classroom.Editor
             AssetDatabase.SaveAssets();
             Debug.Log("Applied simple object choices.");
         }
+        // Prefab 顺序和 placeableNames 名称顺序必须一致，因为运行时按相同编号配对。
 
+        // ===== Unity 菜单：更新选物预览、色块与房间设置按钮 =====
+        // Saves the selection controls into the scene; GameUI drives their runtime visibility.
         [MenuItem("HideAR/Classroom/Apply Selection UI")]
         public static void ApplySelectionUi()
         {
             EditorSceneManager.OpenScene(ScenePath);
             var game = Object.FindAnyObjectByType<GameFlow>();
+            // 这条 Editor 命令依赖已保存 Scene 内存在 GameFlow、GameUI 和 PlaceOnPlane；后面会改它们的序列化引用。
             ApplyUiStyle(game.ui);
             MakeSelectionControls(game.ui, game);
             ApplyObjectAppearance(game.placement);
+            game.ui.Refresh(game);
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
             EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
             AssetDatabase.SaveAssets();
             Debug.Log("Applied object preview and color swatches to the existing classroom scene.");
         }
+        // 依次准备样式/选择控件/外观后刷新一次 UI，并保存 Scene 与资源；这里不运行真正游戏回合。
 
-        // 配置 Android 后，仅在缺少场景时组装初始场景；已有场景直接打开，不重建。
-        // Configure Android, then build an initial scene only if missing; otherwise open it unchanged.
+        // ===== 首次组装：准备 Android 配置；仅当 Scene 不存在时创建游戏对象 =====
+        // Builds the editor scene and saved assets; it is not called for every play session.
         public static void Prepare()
         {
             foreach (var path in new[] { Settings, Prefabs, "Assets/HideAR/Scenes" }) Directory.CreateDirectory(path);
             AssetDatabase.Refresh();
             ConfigureAndroid();
             if (File.Exists(ScenePath)) { EditorSceneManager.OpenScene(ScenePath); return; }
+            // ConfigureAndroid 已在上面执行；如果场景已存在，这里只打开并结束，避免复制一套对象。
+
+            // ===== 创建 URP 渲染资源并设为项目默认值 =====
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var renderer = ScriptableObject.CreateInstance<UniversalRendererData>();
             renderer.intermediateTextureMode = IntermediateTextureMode.Auto;
@@ -125,9 +147,9 @@ namespace HideAR.Classroom.Editor
                 QualitySettings.SetQualityLevel(i, false);
                 QualitySettings.renderPipeline = pipeline;
             }
+            // 这里写入图形质量设置（URP、HDR、抗锯齿等）；它们不属于 HideAR 阶段逻辑，也不实现现实遮挡。
 
-            // Input System 绑定头显姿态、右手柄瞄准、扳机和 A 键；不自行推算设备姿态。
-            // Bind headset pose, right aim, trigger and A through Input System, not custom pose tracking.
+            // ===== 创建 XR Input Actions 资产：头显、右手柄、Trigger、A 键 =====
             var actions = ScriptableObject.CreateInstance<InputActionAsset>();
             var map = actions.AddActionMap("Headset");
             var headPosition = map.AddAction("Head position", InputActionType.Value, "<XRHMD>/centerEyePosition", expectedControlLayout: "Vector3");
@@ -139,9 +161,10 @@ namespace HideAR.Classroom.Editor
             var trigger = map.AddAction("Right trigger", InputActionType.Button, "<XRController>{RightHand}/triggerPressed");
             var recenter = map.AddAction("Bring menu here", InputActionType.Button, "<XRController>{RightHand}/primaryButton");
             AssetDatabase.CreateAsset(actions, Settings + "Controls.asset");
+            // InputActionAsset 保存 Unity Input System 的动作绑定；TrackedPoseDriver 之后会读取头部/手柄姿态。
+            // 这些 binding 来自 XR 设备，不是项目自己计算的头部或手柄追踪算法。
 
-            // 把官方 AR/XR 组件放进场景；权限通过前保持平面和 AR 射线管理器关闭。
-            // Assemble official AR/XR components; keep plane/AR-raycast managers off until authorized.
+            // ===== 创建 ARSession、XR Origin、头显相机和平面/射线管理器 =====
             var session = new GameObject("AR Session", typeof(ARSession)).GetComponent<ARSession>();
             var rig = new GameObject("XR Origin", typeof(XROrigin));
             var origin = rig.GetComponent<XROrigin>();
@@ -169,6 +192,10 @@ namespace HideAR.Classroom.Editor
             var raycasts = rig.AddComponent<ARRaycastManager>();
             raycasts.enabled = false;
             var anchors = rig.AddComponent<ARAnchorManager>();
+            // XROrigin 整理头显追踪坐标；TrackedPoseDriver 使用上面的 Input Actions 更新相机位置/方向。
+            // ARPlaneManager 只请求水平面；两个查询组件初始关闭，RoomAccess 获得权限后才打开。
+
+            // ===== 创建右手柄 UI 射线和点击输入 =====
 
             var interaction = new GameObject("XR Interaction Manager", typeof(XRInteractionManager), typeof(InputActionManager));
             interaction.GetComponent<InputActionManager>().actionAssets = new List<InputActionAsset> { actions };
@@ -189,7 +216,10 @@ namespace HideAR.Classroom.Editor
             var line = hand.AddComponent<LineRenderer>();
             line.sharedMaterial = Material("Controller Ray", new Color(0.55f, 0.92f, 1));
             hand.AddComponent<XRInteractorLineVisual>().lineWidth = 0.004f;
+            // XRUIInputModule 把手柄射线转换成按钮点击；Trigger 用于点 UI，LineRenderer 只负责画可见射线。
+            // XRRayInteractor 的 select/activate 未绑定；放置/找到由 PlaceOnPlane 自己进行射线判断。
 
+            // ===== 创建运行时的三个管理组件并连接 Inspector 引用 =====
             var logic = new GameObject("HideAR Game");
             var game = logic.AddComponent<GameFlow>();
             var placement = logic.AddComponent<PlaceOnPlane>();
@@ -209,12 +239,13 @@ namespace HideAR.Classroom.Editor
             Object.DestroyImmediate(placement.marker.GetComponent<Collider>());
             placement.marker.GetComponent<Renderer>().sharedMaterial = Material("Marker", new Color(1, 0.85f, 0.2f));
             placement.marker.SetActive(false);
+            // marker 是命中位置提示，移除 Collider 避免被物理射线误当目标；正式模型要等玩家放置后才创建。
             game.room = room; game.placement = placement;
             game.recenterAction = Reference(recenter);
-            game.ui = MakeUI(camera, placement.prefabToPlace);
+            game.ui = MakeUI(camera);
             ApplyObjectAppearance(placement);
-            // 持久 Button 事件保存到场景 Inspector，运行时无需再手动绑定按钮。
-            // Persist Button events in the scene Inspector instead of wiring them again at runtime.
+
+            // ===== 保存按钮点击绑定，并把课堂场景设为唯一构建场景 =====
             UnityEventTools.AddPersistentListener(game.ui.primary.onClick, game.Primary);
             UnityEventTools.AddPersistentListener(game.ui.secondary.onClick, game.Secondary);
             UnityEventTools.AddPersistentListener(game.ui.reset.onClick, game.ResetGame);
@@ -225,12 +256,19 @@ namespace HideAR.Classroom.Editor
             AssetDatabase.SaveAssets();
             Debug.Log("Classroom scene saved. Original project not used or modified.");
         }
+        // AddPersistentListener 将按钮与 GameFlow 方法保存进 Scene；玩家运行时不执行 ClassroomSetup。
+        // ScenePath 被加入 Build Settings，因此此 APK 只从课堂版场景启动。
 
+        // ===== Helper：创建对象并放到指定 Transform 下 =====
+        // Creates a child object while keeping its local transform at the parent origin.
         static GameObject Child(string name, Transform parent)
         {
             var obj = new GameObject(name); obj.transform.SetParent(parent, false); return obj;
         }
+        // worldPositionStays=false 表示按父对象的局部坐标组织层级，适合 XR Origin/相机/手柄结构。
 
+        // ===== Helper：保存场景能引用的 InputActionReference =====
+        // Stores a reference to an action; it does not create a second input binding.
         static InputActionReference Reference(InputAction action)
         {
             var reference = InputActionReference.Create(action);
@@ -238,7 +276,10 @@ namespace HideAR.Classroom.Editor
             AssetDatabase.AddObjectToAsset(reference, Settings + "Controls.asset");
             return reference;
         }
+        // Scene 的 Inspector 字段引用同一个 Controls.asset 动作，避免重复复制输入设置。
 
+        // ===== Helper：让 Unity 的 TrackedPoseDriver 使用对应 XR 输入 =====
+        // Unity's component applies the headset/controller pose to the object's Transform.
         static void AddPose(GameObject obj, InputAction position, InputAction rotation, InputAction tracking)
         {
             var driver = obj.AddComponent<TrackedPoseDriver>();
@@ -246,13 +287,16 @@ namespace HideAR.Classroom.Editor
             driver.rotationInput = new InputActionProperty(Reference(rotation));
             driver.trackingStateInput = new InputActionProperty(Reference(tracking));
         }
+        // 这里只连接位置、旋转、追踪状态三个动作；实际姿态由 Unity XR 输入更新。
 
+        // ===== Helper：创建供 UI/提示网格使用的 Unlit 材质 =====
         static Material Material(string name, Color color)
         {
             var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             material.SetColor("_BaseColor", color);
             if (color.a < 1)
             {
+                // alpha<1 表示半透明；配置混合方式、关闭深度写入并让材质可双面显示。
                 material.SetFloat("_Surface", 1);
                 material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
                 material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
@@ -264,7 +308,10 @@ namespace HideAR.Classroom.Editor
             AssetDatabase.CreateAsset(material, Settings + name + ".mat");
             return material;
         }
+        // 不透明材质跳过透明设置；模型的 Simple Lit 材质由 ApplyObjectAppearance 另行配置。
 
+        // ===== Helper：创建 ARPlaneManager 使用的平面显示 Prefab =====
+        // ARPlaneMeshVisualizer draws plane data supplied by AR Foundation; it does not detect surfaces.
         static GameObject MakePlane()
         {
             var obj = new GameObject("Room Surface", typeof(ARPlane), typeof(MeshFilter), typeof(MeshRenderer), typeof(LineRenderer), typeof(ARPlaneMeshVisualizer));
@@ -275,9 +322,11 @@ namespace HideAR.Classroom.Editor
             var prefab = PrefabUtility.SaveAsPrefabAsset(obj, Prefabs + "Room Surface.prefab");
             Object.DestroyImmediate(obj); return prefab;
         }
+        // ARPlaneMeshVisualizer 把 AR Foundation 已提供的平面画出来；MeshRenderer/LineRenderer 负责填充和边线。
+        // 保存成 Prefab 后销毁编辑器临时对象；运行时 GameFlow 只切换这些 Renderer 的显隐。
 
-        // 把原模型按包围盒缩到 18.2 厘米高，并保存带可点击碰撞盒的 Prefab。
-        // Fit the source model to 18.2 cm height and save a prefab with a clickable collider.
+        // ===== Helper：缩小恐龙源模型并保存恐龙 Prefab =====
+        // Measures the visible model, scales it, then adds a collider for the seeker's ray.
         static GameObject MakeDinosaur()
         {
             var root = new GameObject("Dinosaur");
@@ -289,17 +338,26 @@ namespace HideAR.Classroom.Editor
             bounds = renderers[0].bounds;
             foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
             model.transform.position -= new Vector3(bounds.center.x, bounds.min.y - 0.005f, bounds.center.z);
+            // bounds 合并所有子 Renderer 的可见范围；用目标高度 0.182 米缩放，再把模型底部对齐到根节点附近。
+            // 这样新生成的 Prefab 便于放在平面上；后来在 Inspector 手动改过的 Prefab 不受此处保证。
+
+            // ===== 为源模型的每种材质建立 URP 材质副本 =====
             var materials = new Dictionary<Material, Material>();
             foreach (var renderer in renderers)
                 renderer.sharedMaterials = renderer.sharedMaterials.Select(old =>
                 {
                     if (!materials.TryGetValue(old, out var converted))
                     {
+                        // 同一种源材质可能出现在多个 Renderer 上；字典里没有时才创建一次转换材质。
                         converted = Material("Dinosaur " + materials.Count, old.HasProperty("_Color") ? old.color : new Color(0.95f, 0.45f, 0.62f));
                         materials.Add(old, converted);
                     }
                     return converted;
                 }).ToArray();
+            // Select 将每个旧材质换成字典中的 URP 材质，ToArray 再组成 Renderer 需要的材质数组。
+            // 这是编辑器制作 Prefab；运行时 PlaceOnPlane 只实例化保存后的模型，不重复转换 FBX。
+
+            // ===== 添加正式模型的 Collider 并保存 Prefab =====
             bounds = renderers[0].bounds;
             foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
             var collider = root.AddComponent<BoxCollider>();
@@ -308,7 +366,10 @@ namespace HideAR.Classroom.Editor
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, Prefabs + "Dinosaur.prefab");
             Object.DestroyImmediate(root); return prefab;
         }
+        // BoxCollider 比模型可见范围宽约 5 厘米，方便 Seeker 的 Physics.Raycast 命中；临时根对象保存后销毁。
 
+        // ===== Helper：按固定顺序生成四个可放置模型 =====
+        // The array order must match the names and SelectedIndex used at runtime.
         static GameObject[] MakePlaceableChoices(GameObject dinosaur)
         {
             return new[]
@@ -319,19 +380,23 @@ namespace HideAR.Classroom.Editor
                 MakePlaceable("animal-bunny.fbx", "Bunny", 0.145f)
             };
         }
+        // 返回数组的 0/1/2/3 依次是 Dinosaur/Dog/Cat/Bunny；每个宠物目标高度以米为单位。
+        // GameFlow 的 SelectedIndex 直接使用这些下标，所以不能随意调换顺序。
 
-        // 同一套资源处理方式用于不同小模型，不为每种动物建立独立游戏系统。
-        // Reuse the same asset preparation for small models, not a separate game system per animal.
+        // ===== Helper：将 Kenney 源动物模型制成小型、可被射线命中的 Prefab =====
+        // Reads a source FBX, sizes it, assigns its texture, adds a collider, and saves a prefab.
         static GameObject MakePlaceable(string sourceFile, string displayName, float targetHeight)
         {
             var sourcePath = CubePetsFbx + sourceFile;
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
             if (source == null) throw new FileNotFoundException("Candidate model not found", sourcePath);
+            // 源 FBX 不存在就抛出错误停止；不继续保存一个空的可选模型。
             var root = new GameObject(displayName);
             var model = Object.Instantiate(source, root.transform);
             model.name = displayName + " Model";
             var renderers = model.GetComponentsInChildren<Renderer>();
             if (renderers.Length == 0) throw new Exception(displayName + " has no renderers.");
+            // 找不到 Renderer 表示模型没有可绘制部分；此时停止，避免生成看不见的 Prefab。
             var bounds = renderers[0].bounds;
             foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
             model.transform.localScale *= targetHeight / bounds.size.y;
@@ -351,8 +416,12 @@ namespace HideAR.Classroom.Editor
             Object.DestroyImmediate(root);
             return prefab;
         }
+        // targetHeight 是编辑器制作 Prefab 时的目标高度；运行时不会重新测量 FBX。
+        // Collider 稍大于可见模型，方便 Seeker 射线命中；保存后清除编辑器里的临时根对象。
 
-        static GameUI MakeUI(Camera camera, GameObject dinosaur)
+        // ===== Helper：创建世界空间任务卡及基础文字/按钮 =====
+        // Creates the saved menu canvas; GameUI fills it with stage-specific content at runtime.
+        static GameUI MakeUI(Camera camera)
         {
             var root = new GameObject("Game Menu", typeof(RectTransform), typeof(Canvas), typeof(TrackedDeviceGraphicRaycaster), typeof(Image), typeof(BoxCollider), typeof(GameUI));
             root.layer = 5;
@@ -371,21 +440,21 @@ namespace HideAR.Classroom.Editor
             ui.secondary = Button(root.transform, "Secondary", new Vector2(220, -167), new Vector2(420, 86), new Color(0.64f, 0.83f, 0.89f));
             ui.reset = Button(root.transform, "Reset", new Vector2(300, -274), new Vector2(260, 68), new Color(0.97f, 0.70f, 0.51f));
             ui.reset.GetComponentInChildren<Text>().text = "Reset round";
-            ui.mascot = Object.Instantiate(dinosaur, root.transform);
-            Object.DestroyImmediate(ui.mascot.GetComponent<Collider>());
-            ui.mascot.name = "Menu dinosaur";
-            ui.mascot.transform.localScale = Vector3.one * 430;
-            ui.mascot.transform.localPosition = new Vector3(350, 132, -80);
-            ui.mascot.transform.localRotation = Quaternion.Euler(0, -35, 0);
             ApplyUiStyle(ui);
             MakeSelectionControls(ui, Object.FindAnyObjectByType<GameFlow>());
             return ui;
         }
+        // Canvas 是 WorldSpace，所以卡片是真实空间里的物体；0.001 把像素尺寸缩放成合适的世界尺寸。
+        // TrackedDeviceGraphicRaycaster 接收 XR 射线 UI 点击；BoxCollider 让射线不能从卡片空白处穿过去。
+        // 此处创建控件和默认样式；运行时的阶段文字、可见性由 GameUI.Refresh 决定。
 
+        // ===== 编辑器处理模型共享材质、宠物调色贴图和补光 =====
+        // This writes project assets. Runtime ApplyColor changes only each visible instance.
         static void ApplyObjectAppearance(PlaceOnPlane placement)
         {
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(CubePetsFbx + "Textures/colormap.png");
             if (texture == null) throw new Exception("Cube Pets color texture is missing.");
+            // 没有 Kenney 源贴图就停止；后续不能正确生成狗/猫/兔子的颜色选择。
             placement.colorTextures = MakeColorTextures(texture);
             foreach (var prefab in placement.placeablePrefabs)
                 foreach (var material in prefab.GetComponentsInChildren<Renderer>().SelectMany(r => r.sharedMaterials).Distinct())
@@ -395,6 +464,7 @@ namespace HideAR.Classroom.Editor
                     material.SetColor("_SpecColor", Color.black);
                     if (prefab != placement.prefabToPlace)
                     {
+                        // 恐龙保留它自己的材质；其他宠物模型使用 Cube Pets 的基础贴图。
                         material.SetTexture("_BaseMap", texture);
                         material.SetColor("_BaseColor", Color.white);
                     }
@@ -409,9 +479,11 @@ namespace HideAR.Classroom.Editor
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.6f, 0.6f, 0.6f);
         }
+        // 这些是 Editor 中写入的共享资源；运行时选颜色走 PlaceOnPlane.ApplyColor 的实例覆盖，不再重写资源。
+        // Directional Light 只照亮虚拟模型；不产生现实家具的深度遮挡或碰撞。
 
-        // 编辑器预生成宠物调色贴图并保留灰阶脸部；运行时只选取对应贴图。
-        // Precompute pet palettes while preserving grayscale faces; runtime only selects a texture.
+        // ===== Editor 预生成宠物颜色贴图，保留灰阶脸部细节 =====
+        // Pixel recoloring happens while preparing assets, not every frame during gameplay.
         static Texture2D[] MakeColorTextures(Texture2D original)
         {
             var choices = new Texture2D[PlaceOnPlane.Colors.Length];
@@ -419,31 +491,41 @@ namespace HideAR.Classroom.Editor
             var readable = new Texture2D(2, 2);
             readable.LoadImage(File.ReadAllBytes(AssetDatabase.GetAssetPath(original)));
             var sourcePixels = readable.GetPixels();
+            // 第 0 项是原图；另读临时副本来访问像素，避免直接改写 Kenney 的来源贴图。
             for (int i = 1; i < choices.Length; i++)
             {
                 string path = Settings + "Pet Color " + PlaceOnPlane.ColorNames[i] + ".asset";
                 var result = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 bool create = result == null;
+                // 没有现成 .asset 就创建；已有同名颜色贴图则更新它，避免产生重复资源。
                 if (create) result = new Texture2D(readable.width, readable.height, TextureFormat.RGBA32, true);
+                // 新建贴图要能写入像素；已有贴图直接复用。
                 var pixels = sourcePixels.Select(pixel =>
                 {
                     float min = Mathf.Min(pixel.r, pixel.g, pixel.b);
                     float max = Mathf.Max(pixel.r, pixel.g, pixel.b);
                     return max - min < 0.08f ? pixel : PlaceOnPlane.Colors[i] * Mathf.Lerp(0.75f, 1, max);
                 }).ToArray();
+                // RGB 三个值相差很小时视作灰阶（常见于脸部细节），原样保留；其他像素换成选中颜色并保留明暗。
                 for (int p = 0; p < pixels.Length; p++) pixels[p].a = sourcePixels[p].a;
+                // 恢复来源图每个像素的透明度，避免换色时丢掉透明边缘。
                 result.SetPixels(pixels); result.Apply(); result.filterMode = FilterMode.Bilinear;
                 if (create) AssetDatabase.CreateAsset(result, path); else EditorUtility.SetDirty(result);
+                // 新纹理登记为 Project 资源；旧纹理标为已修改，之后由 SaveAssets 写入磁盘。
                 choices[i] = result;
             }
             Object.DestroyImmediate(readable);
             return choices;
         }
+        // 最后销毁临时读取贴图；返回值包含原贴图及各颜色贴图，运行时按 ColorIndex 选择。
 
-        // 把独立房间按钮、模型预览和色块引用保存到已有场景。
-        // Save separate room setup, model preview and swatch references into the existing scene.
+        // ===== Helper：创建 Set up room、模型预览容器和颜色按钮 =====
+        // Wires each editor-created control to the existing GameFlow/GameUI runtime scripts.
         static void MakeSelectionControls(GameUI ui, GameFlow game)
         {
+            var oldMascot = ui.transform.Find("Menu dinosaur");
+            if (oldMascot != null) Object.DestroyImmediate(oldMascot.gameObject);
+            // Scene 若残留旧的固定恐龙装饰就移除；菜单只保留跟随选择切换的预览。
             var existingRoom = ui.transform.Find("Room Setup");
             ui.roomSetup = existingRoom != null ? existingRoom.GetComponent<Button>() :
                 Button(ui.transform, "Room Setup", Vector2.zero, Vector2.one, Color.white);
@@ -452,35 +534,45 @@ namespace HideAR.Classroom.Editor
             ui.roomSetup.GetComponentInChildren<Text>().text = "Set up room";
             ui.roomSetup.onClick = new Button.ButtonClickedEvent();
             UnityEventTools.AddPersistentListener(ui.roomSetup.onClick, game.SetUpRoom);
+            // Set up room 始终调用 GameFlow.SetUpRoom；它不是 Secondary 换模型按钮。
             var preview = ui.transform.Find("Object Preview");
             if (preview == null) preview = Child("Object Preview", ui.transform).transform;
+            // 重跑 Editor 命令时复用已有容器，避免 Scene 出现多个 Object Preview 根节点。
             preview.localPosition = new Vector3(260, 40, -130);
             preview.localScale = Vector3.one;
             ui.previewRoot = preview;
-            ui.mascot.SetActive(false);
             ui.colorButtons = new Button[PlaceOnPlane.Colors.Length];
+            // 每次运行都重建运行时使用的 Button 引用数组，数组下标与颜色编号一一对应。
             for (int i = 0; i < ui.colorButtons.Length; i++)
             {
                 string name = "Color " + PlaceOnPlane.ColorNames[i];
                 var existing = ui.transform.Find(name);
+                // 同名色块已存在就复用；没有才新建，防止重复生成按钮。
                 var button = existing != null ? existing.GetComponent<Button>() : Button(ui.transform, name, Vector2.zero, Vector2.one, Color.white);
-                var size = i == 0 ? new Vector2(110, 46) : new Vector2(46, 46);
-                var position = new Vector2(i == 0 ? -310 : -205 + (i - 1) * 70, -96);
+                var size = i == 0 ? new Vector2(108, 48) : new Vector2(48, 48);
+                // Original 要显示文字所以按钮较宽；其他项只显示颜色方块。
+                var position = new Vector2(i == 0 ? -330 : -240 + (i - 1) * 60, -98);
                 StyleButton(button, position, size, PlaceOnPlane.Colors[i]);
                 button.GetComponent<Image>().color = Color.white;
                 var label = button.GetComponentInChildren<Text>();
                 label.text = i == 0 ? "Original" : "";
                 label.fontSize = 19;
                 var outline = button.GetComponent<Outline>() ?? button.gameObject.AddComponent<Outline>();
+                // 已有 Outline 就复用；没有才添加。运行时 GameUI 用它标出所选颜色。
                 outline.effectColor = Color.white;
                 outline.effectDistance = new Vector2(3, -3);
                 outline.enabled = i == 0;
                 button.onClick = new Button.ButtonClickedEvent();
+                // 清除这个 Button 原有的持久点击列表，再只绑定一次 SelectColor(i)，避免重复点击回调。
                 UnityEventTools.AddIntPersistentListener(button.onClick, game.SelectColor, i);
+                // 每个色块都连到同一个 SelectColor 方法，只是保存不同的颜色编号 i。
                 ui.colorButtons[i] = button;
             }
+            // 这里负责把控件和引用保存进 Scene；菜单模型副本由 GameUI.RefreshSelection 创建/更换。
         }
 
+        // ===== Helper：保存任务卡的普通尺寸与初始布局 =====
+        // The runtime script switches to the smaller Handoff layout when needed.
         static void ApplyUiStyle(GameUI ui)
         {
             var root = (RectTransform)ui.transform;
@@ -499,25 +591,26 @@ namespace HideAR.Classroom.Editor
             StyleButton(ui.primary, new Vector2(-185, -166), new Vector2(340, 68), new Color(0.27f, 0.86f, 0.62f));
             StyleButton(ui.secondary, new Vector2(185, -166), new Vector2(340, 68), new Color(0.62f, 0.82f, 0.9f));
             StyleButton(ui.reset, new Vector2(270, -238), new Vector2(220, 58), new Color(0.98f, 0.69f, 0.50f));
-            if (ui.mascot != null)
-            {
-                ui.mascot.transform.localScale = Vector3.one * 300;
-                ui.mascot.transform.localPosition = new Vector3(302, 112, -80);
-                ui.mascot.transform.localRotation = Quaternion.Euler(0, -35, 0);
-            }
         }
+        // 同步 BoxCollider 和卡片尺寸，让射线拦截范围与可见 UI 相同；Handoff 小卡片由 GameUI 再调整。
 
+        // ===== Helper：设置已有 Text 的内容/位置/字号 =====
+        // A null content keeps the stage text that GameUI will provide at runtime.
         static void SetText(Text text, string content, Vector2 position, Vector2 size, int fontSize, Color color)
         {
             if (text == null) return;
+            // Edition 等装饰文字可能不存在；没有 Text 时退出，避免后面访问 null 报错。
             var rect = (RectTransform)text.transform;
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
             text.fontSize = fontSize;
             text.color = color;
             if (content != null) text.text = content;
+            // content=null 时保留运行时阶段文字；有内容时才直接替换。
         }
 
+        // ===== Helper：设置按钮 RectTransform 和普通/悬停/禁用颜色 =====
+        // Styles a button only; its saved onClick event is left unchanged.
         static void StyleButton(Button button, Vector2 position, Vector2 size, Color color)
         {
             var rect = (RectTransform)button.transform;
@@ -537,11 +630,15 @@ namespace HideAR.Classroom.Editor
             };
             var label = button.GetComponentInChildren<Text>();
             if (label == null) return;
+            // 按钮没有文字子物体时仍保留按钮样式，只跳过下面的文字字号/颜色设置。
             label.fontSize = button.name == "Reset" ? 22 : 26;
             label.color = new Color(0.03f, 0.08f, 0.07f);
             label.rectTransform.sizeDelta = size - new Vector2(28, 8);
         }
+        // ColorBlock 控制正常、悬停、按下和不可点时的外观，不改变按钮的点击功能。
 
+        // ===== Helper：创建不遮挡 XR UI 射线的文字 =====
+        // Creates a visual label; it is not itself a clickable control.
         static Text Label(Transform parent, string name, string content, Vector2 position, Vector2 size, int fontSize, Color color)
         {
             var obj = new GameObject(name, typeof(RectTransform), typeof(Text)); obj.layer = 5;
@@ -551,7 +648,10 @@ namespace HideAR.Classroom.Editor
             text.raycastTarget = false; text.horizontalOverflow = HorizontalWrapMode.Wrap; text.verticalOverflow = VerticalWrapMode.Truncate;
             return text;
         }
+        // raycastTarget=false 让文字区域把 XR UI 射线交给下方按钮；文本可换行但超高会被截断。
 
+        // ===== Helper：创建按钮外观；点击事件由调用者另行绑定 =====
+        // The caller adds the persistent GameFlow event after creating this control.
         static Button Button(Transform parent, string name, Vector2 position, Vector2 size, Color color)
         {
             var obj = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button)); obj.layer = 5;
@@ -562,14 +662,16 @@ namespace HideAR.Classroom.Editor
             Label(obj.transform, "Label", name, Vector2.zero, size - new Vector2(32, 8), 28, new Color(0.04f, 0.1f, 0.08f)).alignment = TextAnchor.MiddleCenter;
             return button;
         }
+        // 此函数只创建 Image/Button/Text；之后的 UnityEventTools 才会把点击连接到具体 GameFlow 方法。
 
-        // Android/OpenXR 构建配置，不是玩法：独立包名使课堂版与旧版可以共存。
-        // Android/OpenXR build configuration, not gameplay; a distinct package ID preserves the old app.
+        // ===== Editor 配置 Android/OpenXR Loader、Quest Features 和 PlayerSettings =====
+        // This writes project build settings; it does not implement runtime tracking.
         static void ConfigureAndroid()
         {
             var settings = AssetDatabase.LoadAssetAtPath<XRGeneralSettingsPerBuildTarget>(Settings + "XR Settings.asset");
             if (settings == null)
             {
+                // 第一次没有 XR Settings.asset 时才新建；已有资产会在后面被复用。
                 settings = ScriptableObject.CreateInstance<XRGeneralSettingsPerBuildTarget>();
                 AssetDatabase.CreateAsset(settings, Settings + "XR Settings.asset");
                 settings.CreateDefaultSettingsForBuildTarget(BuildTargetGroup.Android);
@@ -578,15 +680,19 @@ namespace HideAR.Classroom.Editor
             EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, settings, true);
             var general = settings.SettingsForBuildTarget(BuildTargetGroup.Android);
             if (!XRPackageMetadataStore.AssignLoader(general.Manager, "UnityEngine.XR.OpenXR.OpenXRLoader", BuildTargetGroup.Android)) throw new Exception("OpenXR loader setup failed.");
+            // Loader 分配失败就抛异常停止；没有 OpenXR Loader 的包无法按预期启动 XR。
             general.InitManagerOnStart = true;
             OpenXRFeatureSetManager.InitializeFeatureSets();
             var xr = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
+            // 取得当前 Android OpenXR 配置；下面按功能名字启用所需的官方 Features。
             foreach (var feature in xr.GetFeatures())
             {
                 string name = feature.GetType().Name;
                 feature.enabled = new[] { "MetaQuestFeature", "OpenXRLifeCycleFeature", "OculusTouchControllerProfile", "MetaQuestTouchPlusControllerProfile", "OpenXRCompositionLayersFeature", "ARSessionFeature", "ARCameraFeature", "ARAnchorFeature", "ARPlaneFeature", "ARRaycastFeature" }.Contains(name);
+                // 名称在白名单中才启用该 Feature；其余已安装 Features 会被关闭。
                 if (name == "MetaQuestFeature")
                 {
+                    // MetaQuestFeature 还需要指定可用设备型号，下面只保留此配置认识的 Quest 3/3S ID。
                     var data = new SerializedObject(feature);
                     var devices = data.FindProperty("targetDevices");
                     for (int i = 0; i < devices.arraySize; i++)
@@ -594,13 +700,16 @@ namespace HideAR.Classroom.Editor
                         var device = devices.GetArrayElementAtIndex(i);
                         string id = device.FindPropertyRelative("manifestName").stringValue;
                         device.FindPropertyRelative("enabled").boolValue = id == "eureka" || id == "quest3s";
+                        // id 是 eureka 或 quest3s 才启用该条目；这是 SDK 配置，不是头显识别代码。
                     }
                     data.ApplyModifiedPropertiesWithoutUndo();
                 }
                 EditorUtility.SetDirty(feature);
             }
+            // SerializedObject 通过 Unity Inspector 序列化字段写入目标设备选项；追踪仍由 OpenXR/Meta 提供。
             xr.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
             EditorUtility.SetDirty(xr); EditorUtility.SetDirty(general); EditorUtility.SetDirty(general.Manager); EditorUtility.SetDirty(settings);
+            // 以下写入 Android 包名、IL2CPP、ARM64、最低系统版本、横屏和 Vulkan 等构建参数。
             PlayerSettings.companyName = "Lingjie Ruan";
             PlayerSettings.productName = "HideAR Classroom";
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.lingjieruan.hidear.classroom");
@@ -620,28 +729,46 @@ namespace HideAR.Classroom.Editor
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
             AssetDatabase.SaveAssets();
         }
+        // 包名用于区分课堂 APK；IL2CPP/ARM64 决定 Android 程序后端与 CPU 架构，Vulkan 是图形 API，不是游戏功能。
+        // 保存设置后由 Unity Editor 生成 Android 包；此方法不在头显运行。
 
-        // 只构建课堂场景到 Builds/Week9；验证配置后调用 Unity BuildPipeline。
-        // Validate settings and use Unity BuildPipeline for the classroom scene in Builds/Week9 only.
+        // ===== Unity 菜单：检查前置条件并构建课堂 APK =====
+        // Builds the classroom scene only. A successful build does not install or test the APK.
         [MenuItem("HideAR/Classroom/Build APK")]
         public static void BuildApk()
         {
-            if (new DriveInfo(Path.GetPathRoot(Application.dataPath)).AvailableFreeSpace < 6L * 1024 * 1024 * 1024)
-                throw new BuildFailedException("Free at least 8 GB before rebuilding. Existing APKs and projects have not been deleted.");
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
                 throw new BuildFailedException("Switch to Android in File > Build Profiles first.");
+            // 当前平台不是 Android 就中止，并告诉用户手动切换；此命令不会更改构建平台。
+            // ===== 平台与可用磁盘空间检查 =====
+            bool hasAndroidCache = File.Exists("Library/Bee/artifacts/Android/il2cppOutput/build/arm64-v8a/libil2cpp.so") &&
+                File.Exists("Library/Bee/Android/Prj/IL2CPP/Gradle/launcher/build/outputs/apk/debug/launcher-debug.apk");
+            int minimumGiB = hasAndroidCache ? 2 : 6;
+            double freeGiB = new DriveInfo(Path.GetPathRoot(Application.dataPath)).AvailableFreeSpace / (1024d * 1024 * 1024);
+            if (freeGiB < minimumGiB)
+                throw new BuildFailedException($"Need at least {minimumGiB} GiB free for this Android build. Existing APKs and projects have not been deleted.");
+            // 空间不足就中止，不自动删除 Library、缓存、源码或之前的 APK。
+            Debug.Log($"Android build space: {freeGiB:0.0} GiB free; minimum {minimumGiB} GiB; prior Android outputs present: {hasAndroidCache}.");
+            // 如果检测到之前的 Android 中间产物，门槛为 2 GiB；没有则按首次构建要求至少 6 GiB。
+            // 这是开始前的保守检查，不保证构建实际只占用这些空间。
+
+            // ===== 先检查 OpenXR，再让 Unity BuildPipeline 打包 =====
             var issues = new List<OpenXRFeature.ValidationRule>();
             OpenXRProjectValidation.GetCurrentValidationIssues(issues, BuildTargetGroup.Android);
             foreach (var issue in issues) Debug.LogWarning(issue.message);
             if (issues.Any(issue => issue.error)) throw new BuildFailedException("Resolve OpenXR Project Validation errors first.");
+            // Any(error) 只要发现一条严重错误就停止；普通 warning 只记录，不在这里中止。
             Directory.CreateDirectory("../Builds/Week9");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = new[] { ScenePath }, target = BuildTarget.Android,
                 locationPathName = "../Builds/Week9/HideAR_Classroom.apk", options = BuildOptions.Development
             });
+            // BuildOptions.Development 表示生成开发构建；输出路径是项目上一级的 Builds/Week9，不是安装命令。
             if (report.summary.result != BuildResult.Succeeded) throw new BuildFailedException("APK failed. Read the first build error.");
+            // Unity 没有返回 Succeeded 就视为失败；只有成功后才打印完成日志。
             Debug.Log("Classroom APK built successfully.");
         }
+        // BuildPlayer 只打包 ScenePath 到 ../Builds/Week9/HideAR_Classroom.apk；不会自动安装或验证 Quest 真机体验。
     }
 }

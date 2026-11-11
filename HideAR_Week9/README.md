@@ -10,15 +10,15 @@ This is a separate Unity project. `../Prototype1` and its APK are the older back
 - Scene: `Assets/HideAR/Scenes/HideAR_Week9.unity`.
 - App name: **HideAR Classroom**.
 - Android identifier: `com.lingjieruan.hidear.classroom` (different from the backup app).
-- Controls: **right controller trigger** for buttons, placement and finding; **Change object** cycles Dinosaur / Dog / Cat / Bunny before placement; color swatches select Original / Moss / Blue / Gray / White; hold **A** to reposition only the menu, release to pin it.
+- Controls: **right controller trigger** for buttons, placement and finding; **Change object** cycles Dinosaur / Dog / Cat / Bunny before placement; color swatches select Original / Moss / Blue / Gray / White / Red / Yellow / Orange / Purple / Pink / Teal / Black; hold **A** to reposition only the menu, release to pin it.
 
 ## Play
 
-Allow room access and use the independent **Set up room** button to complete Quest Space Setup, including the table/floor. This button stays available at welcome and during placement even if room data already exists, so a different room can be set up. Choose an object and color using the model preview. Start hiding and aim at a surface to see an actual-size preview before placing. Review, change color or move the object, then confirm. On the readiness screen, the seeker explicitly clicks **Start search**; only then does the three-second countdown begin. No headset removal is required, so one person can test the whole flow. During seeking, planes and selection previews are hidden. Point at the placed object and press the trigger. The success screen shows search time. Reset reloads this game's scene.
+Allow room access and use the independent **Set up room** button to complete Quest Space Setup, including the table/floor. This button stays available at welcome and during placement even if room data already exists, so a different room can be set up. Choose an object and color using the buttons. All four objects, including Dinosaur, have a menu model preview. Start hiding and aim at a surface to see an actual-size preview before placing. Review, change color or move the object, then confirm. On the readiness screen, the seeker explicitly clicks **Start search**; only then does the three-second countdown begin. No headset removal is required, so one person can test the whole flow. During seeking, planes and selection previews are hidden. Point at the placed object and press the trigger. The success screen shows search time. Reset reloads this game's scene.
 
 Launch the installed app from the headset's **Unknown Sources** library, or connect USB and double-click `Tools/Launch_Quest.command` in Finder. The launcher opens only the installed classroom app; it does not install a new build.
 
-The menu appears in front of the player on first tracking. Afterwards it stays in world space, including stage changes and tracking recovery. Tap A to bring it back, or hold A while turning/moving to choose its location. It stays upright near eye height; looking almost straight down/up preserves its last horizontal heading. Release A before clicking. Repositioning the menu does not move the hidden object or its anchor.
+The menu appears in front of the player on first tracking, after returning from room setup/resume, and when entering an interactive page. These are one-shot recalls except for **Ready to search**, where a smaller card follows the wearer while tracking is valid. Move back to an agreed starting spot before passing the headset, rather than handing it over beside the hidden object. Start search ends following immediately; countdown and seeking keep the menu at its last position. Other pages remain pinned between recalls. Tap A to summon the menu or hold A to adjust it manually; release pins it outside readiness. It stays upright near eye height, preserving the previous horizontal heading near vertical views. Neither following nor manual menu movement moves the hidden object or its anchor, and following alone never starts the countdown.
 
 ## Read the code in this order
 
@@ -40,13 +40,16 @@ The `Editor` folder creates the initial scene/settings and builds the APK. It is
 
 The only enabled build scene is the classroom scene. Switch to Android in File > Build Profiles and use **HideAR > Classroom > Build APK**. The output is `../Builds/Week9/HideAR_Classroom.apk`. No Xcode is involved. The application identifier allows this APK and the older Quest APK to coexist.
 
+Keep `Library/Bee` to reuse previous Android work. The free-space guard requires 2 GiB when both the previous native output and Gradle APK exist, otherwise 6 GiB. These are conservative checks, not predictions of new disk usage or a guarantee that every change can reuse all cached work. Do not delete the cache for a small edit just to pass a fixed clean-build threshold.
+
 ## Verification
 
-- Unity EditMode tests: 27 passed, 0 failed (2026-10-05), including independent room setup, explicit start without headset removal, model/color preview checks and stable manual menu positioning.
-- Android development APK built successfully in Unity; ARM64, package identifier and APK v2 signature verified. Output: `../Builds/Week9/HideAR_Classroom.apk` (about 72 MB).
-- Nine game screens, two menu-position views and 20 model/color combinations passed editor text-height, viewport-boundary and nonblank-image checks. The pinned menu and Start search screen were also visually inspected.
+- Unity EditMode tests: 36 passed, 0 failed (2026-10-19), including readiness-only following, Start search remaining usable while following, following stopping at countdown, compact-card layout restoration and the existing recall/model/color rules.
+- The latest readiness-follow APK was built and installed on Quest 3S on 2026-10-19, with ARM64, the classroom package identifier and APK v2 signature verified. Output: `../Builds/Week9/HideAR_Classroom.apk` (75,357,717 bytes, about 71.9 MiB). ADB returned Success and the installed APK hash matches. Launch reported the classroom UnityPlayerGameActivity, and pidof confirmed a running process. These checks confirm installation/startup, not complete gameplay or following comfort. Earlier APKs are backed up separately.
+- 62 editor views passed text-height, viewport-boundary and nonblank-image checks (2026-10-19), including 48 model/color combinations and readiness at two moved/turned camera poses. The compact following card and restored countdown layout were visually inspected. New images are under `../Builds/Week9/Review/ReadyFollow`; earlier MenuReturnFix and ExpandedColors previews are retained.
 - Test XML and UI previews are saved separately in `../Builds/Week9/Review`.
 - On 2026-10-05 the menu-position APK was installed on Quest 3S with ADB returning Success. The launch check reported the classroom Unity activity, and pidof confirmed a running process. This confirms installation and process startup, not successful gameplay. Room setup, the revised flow and menu comfort still need hardware validation. See VERIFICATION.md for current checks.
+- With explicit user approval, only Week9's regenerable `Library/Bee` cache was removed before the 2026-10-19 rebuild. The previous classroom APK is preserved in `../Builds/Week9/History/HideAR_Classroom-2026-10-05-menu-position.apk`. Cache removal required a full native-library rebuild; ordinary incremental builds can reuse that work, provided enough disk space remains.
 
 ## Boundaries
 
